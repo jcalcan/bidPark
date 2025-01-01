@@ -4,8 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="author" content="Juan Alcantara" />
-    <meta name="description" content="Spots Projects" />
-    <meta name="keywords" content="HTML, CSS, social media project" />
+    <meta
+      name="description"
+      content="Bid Park - Parking Spot Auction Exchange"
+    />
+    <meta name="keywords" content="HTML, CSS, parking project" />
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
 
     <title>Spots</title>
@@ -13,42 +16,61 @@
   <body>
     <div class="page">
       <header class="header">
-        <img id="Spots Logo" class="header__logo" />
-      </header>
-      <main class="content">
-        <section class="profile page__section">
-          <img id="Bessie Coleman" class="profile__avatar" />
-          <div class="profile__column">
-            <h1 class="profile__name">Bessie Coleman</h1>
-            <p class="profile__description">Civil Aviator</p>
-            <button type="button" class="profile__edit-btn">
-              Edit Profile
-            </button>
-          </div>
-          <button class="profile__add-btn">New Post</button>
-        </section>
-        <section class="cards page__section">
-          <ul class="cards__pics"></ul>
-
-          <template id="card">
-            <li class="card">
-              <div class="card__content">
-                <div class="card__trash-btn"></div>
-                <img src="" alt="" class="card__image" />
-
-                <div class="card__footer">
-                  <h2 class="card__footer-title"></h2>
-                  <button type="button" class="card__footer-heart-btn"></button>
-                </div>
-              </div>
+        <h1 class="header__title">Auction Site</h1>
+        <nav class="header__nav">
+          <ul class="nav-list">
+            <li class="nav-list__item">
+              <a href="#" class="nav-list__link">Home</a>
             </li>
-          </template>
+            <li class="nav-list__item">
+              <a href="#" class="nav-list__link">Auctions</a>
+            </li>
+            <li class="nav-list__item">
+              <a href="#" class="nav-list__link">My Bids</a>
+            </li>
+          </ul>
+        </nav>
+      </header>
+      <main class="main">
+        <section class="auction-list">
+          <h2 class="auction-list__title">Active Auctions</h2>
+          <div class="auction-list__container">
+            <article class="auction-item">
+              <h3 class="auction-item__title">Alcantara Painting</h3>
+              <img id="" alt="" class="auction-item__image" />
+              <p class="auction-item__description">
+                A rare vintage Alcantara painting
+              </p>
+              <div class="auction-item__details">
+                <span class="auction-item__current-bid">Current Bid: $500</span>
+                <span class="auction-item__time-remaining"
+                  >Time Left: 2h 30m</span
+                >
+              </div>
+              <button class="auction-item__bid-button">Place Bid</button>
+            </article>
+          </div>
+        </section>
+
+        <section class="bid-form">
+          <h2 class="bid-form__title">Place Your Bid</h2>
+          <form class="bid-form__form">
+            <input
+              type="number"
+              class="bid-form__input"
+              placeholder="Enter your bid"
+            />
+            <button type="submit" class="bid-form__submit">Submit Bid</button>
+          </form>
         </section>
       </main>
-      <footer class="footer page__section">
-        <p class="footer__copywrite">2024 © Spots</p>
+      <footer class="footer">
+        <p class="footer__text">
+          &copy; 2025 Bid Park - Parking Spot Auction Exchange. All rights
+          reserved.
+        </p>
       </footer>
-      <div class="modal" id="edit-modal">
+      <!-- <div class="modal" id="edit-modal">
         <div class="modal__container">
           <button type="button" class="modal__close-btn"></button>
           <h2 class="modal__title">Edit Profile</h2>
@@ -131,7 +153,7 @@
           <img src="#" alt="" class="modal__image" />
           <p class="modal__image-footer-title"></p>
         </div>
-      </div>
+      </div> -->
     </div>
   </body>
 </html>

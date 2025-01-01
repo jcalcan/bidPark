@@ -1,218 +1,100 @@
-import "./index.css";
-import {
-  enableValidation,
-  settings,
-  resetValidation,
-} from "../scripts/validation.js";
+import AuctionManager from "../components/AuctionManager.js";
+import User from "../components/User.js";
 
-const initialCards = [
-  {
-    name: "Golden Gate Bridge",
-    link: "https://practicum-content.s3.us-west-1.amazonaws.com/software-engineer/spots/7-photo-by-griffin-wooldridge-from-pexels.jpg",
-  },
-  {
-    name: "Val Thorens",
-    link: "https://practicum-content.s3.us-west-1.amazonaws.com/software-engineer/spots/1-photo-by-moritz-feldmann-from-pexels.jpg",
-  },
-  {
-    name: "Restaurant terrace",
-    link: "https://practicum-content.s3.us-west-1.amazonaws.com/software-engineer/spots/2-photo-by-ceiline-from-pexels.jpg",
-  },
-  {
-    name: "An outdoor cafe",
-    link: "https://practicum-content.s3.us-west-1.amazonaws.com/software-engineer/spots/3-photo-by-tubanur-dogan-from-pexels.jpg",
-  },
-  {
-    name: "A very long bridge, over the forest and through the trees",
-    link: "https://practicum-content.s3.us-west-1.amazonaws.com/software-engineer/spots/4-photo-by-maurice-laschet-from-pexels.jpg",
-  },
-  {
-    name: "Tunnel with morning light",
-    link: "https://practicum-content.s3.us-west-1.amazonaws.com/software-engineer/spots/5-photo-by-van-anh-nguyen-from-pexels.jpg",
-  },
-  {
-    name: "Mountain house",
-    link: "https://practicum-content.s3.us-west-1.amazonaws.com/software-engineer/spots/6-photo-by-moritz-feldmann-from-pexels.jpg",
-  },
-];
+document.addEventListener("DOMContentLoaded", () => {
+  const auctionManager = new AuctionManager();
+  let currentUser = null;
 
-const profileEditButton = document.querySelector(".profile__edit-btn");
-const addPostButton = document.querySelector(".profile__add-btn");
-const editProfileModal = document.querySelector("#edit-modal");
-const addPostModal = document.querySelector("#add-card-modal");
-const imageZoomModal = document.querySelector("#card-image-modal");
-const profileCloseButton = editProfileModal.querySelector(".modal__close-btn");
-const closePostModalButton = addPostModal.querySelector(".modal__close-btn");
-const closeZoomModalButton = imageZoomModal.querySelector(".modal__close-btn");
-
-const profileNameInput = editProfileModal.querySelector("#modal__input");
-const profileDescriptionInput = editProfileModal.querySelector(
-  "#modal__description"
-);
-
-const profileUserName = document.querySelector(".profile__name");
-const profileUserDescription = document.querySelector(".profile__description");
-const profileForm = document.querySelector(".modal__form");
-const addModalForm = document.querySelector("#add-card-form");
-
-const addModalFormLink = addModalForm.querySelector("#add-card-link-input");
-const addModalFormCaption = addModalForm.querySelector("#add-card-name-input");
-const modalImage = document.querySelector(".modal__image");
-const modalFooterCaption = document.querySelector(".modal__image-footer-title");
-
-const cardContentContainer = document.querySelector(".cards__pics");
-
-const cardHeartButton = cardContentContainer.querySelector(
-  ".card__footer-heart-btn"
-);
-
-const closeModalListener = (event) => {
-  if (event.target.classList.contains("modal_opened")) {
-    closeModal(event.target);
-  }
-};
-
-function openModal(modal) {
-  modal.classList.add("modal_opened");
-  document.body.addEventListener("click", closeModalListener);
-  document.addEventListener("keydown", closeModalEscapeListener);
-}
-
-function closeModal(modal) {
-  modal.classList.remove("modal_opened");
-  document.body.removeEventListener("click", closeModalListener);
-  document.removeEventListener("keydown", closeModalEscapeListener);
-}
-
-function handleProfileFormSubmit(evt) {
-  evt.preventDefault();
-
-  profileUserName.textContent = profileNameInput.value;
-  profileUserDescription.textContent = profileDescriptionInput.value;
-
-  closeModal(editProfileModal);
-}
-
-function handlePostFormSubmit(evt) {
-  evt.preventDefault();
-
-  const newCard = {
-    name: addModalFormCaption.value,
-    link: addModalFormLink.value,
-  };
-  if (addModalFormCaption.value !== "" && addModalFormLink.value !== "") {
-    initialCards.unshift(newCard);
-
-    cardContentContainer.prepend(getCardElement(newCard));
-
-    closeModal(addPostModal);
+  // Simulating user login
+  function loginUser(userId, userName) {
+    currentUser = new User(userId, userName);
+    document.querySelector(
+      ".header__title"
+    ).textContent = `Welcome, ${userName}!`;
   }
 
-  addModalFormCaption.value = "";
-  addModalFormLink.value = "";
+  // Initialize with a mock user
+  loginUser("user123", "John Doe");
 
-  const inputList = Array.from(addPostModal.querySelectorAll(".modal__input"));
-  const buttonElement = addPostModal.querySelector(".modal__submit-btn");
-  toggleButtonState(inputList, buttonElement, settings);
-}
+  // Create a sample auction
+  const auctionId = "auction001";
+  const startPrice = 100;
+  const startTime = Date.now();
+  const endTime = startTime + 30000; // 30 sec from now
 
-function getCardElement(data) {
-  const cardElement = document
-    .querySelector("#card")
-    .content.querySelector(".card")
-    .cloneNode(true);
-
-  cardElement.querySelector(".card__footer-title").textContent = data.name;
-
-  const cardImage = cardElement.querySelector(".card__image");
-
-  cardImage.src = data.link;
-  cardImage.alt = data.name;
-
-  const cardHeartBtn = cardElement.querySelector(".card__footer-heart-btn");
-
-  cardHeartBtn.addEventListener("click", () => {
-    handleLikeButton(cardHeartBtn);
-  });
-
-  const cardTrashButton = cardElement.querySelector(".card__trash-btn");
-
-  cardTrashButton.addEventListener("click", () => {
-    handleDeleteButton(cardElement);
-  });
-
-  cardImage.addEventListener("click", () => {
-    openImageModal(cardElement);
-  });
-
-  return cardElement;
-}
-function handleLikeButton(cardEl) {
-  cardEl.classList.toggle("card__footer-heart-btn-liked");
-}
-
-function handleDeleteButton(cardEl) {
-  const cardName = cardEl.alt;
-
-  const index = initialCards.findIndex((card) => card.name === cardName);
-
-  initialCards.toSpliced(1, index);
-  cardEl.remove();
-}
-
-function openImageModal(cardEl) {
-  const cardImage = cardEl.querySelector(".card__image");
-  const modalCaption = cardEl.querySelector(".card__footer-title");
-
-  modalFooterCaption.textContent = modalCaption.textContent;
-
-  modalImage.src = "";
-
-  openModal(imageZoomModal);
-
-  modalImage.src = cardImage.src;
-  modalImage.alt = cardImage.alt;
-}
-
-profileEditButton.addEventListener("click", () => {
-  profileNameInput.value = profileUserName.textContent;
-  profileDescriptionInput.value = profileUserDescription.textContent;
-  resetValidation(
-    editProfileModal,
-    [profileNameInput, profileDescriptionInput],
-    settings
+  const auction = auctionManager.createAuction(
+    auctionId,
+    startPrice,
+    startTime,
+    endTime
   );
-  openModal(editProfileModal);
-});
+  // console.log("Auction created:", auction);
 
-addPostButton.addEventListener("click", () => {
-  openModal(addPostModal);
-});
+  // Update auction display
+  function updateAuctionDisplay() {
+    const auctionContainer = document.querySelector(".auction-list__container");
+    auctionContainer.innerHTML = ""; // Clear existing auctions
 
-profileCloseButton.addEventListener("click", () => {
-  closeModal(editProfileModal);
-});
+    const auctionElement = document.createElement("article");
+    auctionElement.className = "auction-item";
+    auctionElement.innerHTML = `
+            <h3 class="auction-item__title">Alcantara Painting</h3>
+            <img id="painting" alt="Alcantara painting" class="auction-item__image">
+            <p class="auction-item__description">A rare Alcantara painting</p>
+            <div class="auction-item__details">
+                <span class="auction-item__current-bid">Current Bid: $${
+                  auction.startBidPrice
+                }</span>
+                <span class="auction-item__time-remaining">Time Left: ${formatTimeRemaining(
+                  auction.timeRemaining
+                )}</span>
+            </div>
+            <button class="auction-item__bid-button">Place Bid</button>
+        `;
 
-closePostModalButton.addEventListener("click", () => {
-  closeModal(addPostModal);
-});
+    auctionContainer.appendChild(auctionElement);
 
-closeZoomModalButton.addEventListener("click", () => {
-  closeModal(imageZoomModal);
-});
-
-const closeModalEscapeListener = (event) => {
-  if (event.key === "Escape") {
-    const openModals = document.querySelectorAll(".modal_opened");
-    openModals.forEach(closeModal);
+    // Add event listener to bid button
+    auctionElement
+      .querySelector(".auction-item__bid-button")
+      .addEventListener("click", () => {
+        document.querySelector(".bid-form").style.display = "block";
+      });
   }
-};
 
-profileForm.addEventListener("submit", handleProfileFormSubmit);
-addModalForm.addEventListener("submit", handlePostFormSubmit);
+  // Format time remaining
+  function formatTimeRemaining(ms) {
+    const seconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    return `${hours}h ${minutes % 60}m ${seconds % 60}s`;
+  }
 
-initialCards.forEach((item) => {
-  cardContentContainer.append(getCardElement(item));
+  // Handle bid submission
+  document.querySelector(".bid-form__form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const bidAmount = Number(document.querySelector(".bid-form__input").value);
+    try {
+      currentUser.placeBid(auctionManager, auctionId, bidAmount);
+      updateAuctionDisplay();
+      document.querySelector(".bid-form").style.display = "none";
+    } catch (error) {
+      alert(error.message);
+    }
+  });
+
+  // Update display every second
+  setInterval(updateAuctionDisplay, 1000);
+
+  // Handle auction end
+  auctionManager.on("auctionWinner", ({ auctionId, winnerId }) => {
+    if (winnerId === currentUser.id) {
+      alert(`Congratulations! You won auction ${auctionId}`);
+    } else {
+      alert(`Auction ${auctionId} has ended. The winner is user ${winnerId}`);
+    }
+  });
+
+  // Initial display update
+  updateAuctionDisplay();
 });
-
-enableValidation(settings);
