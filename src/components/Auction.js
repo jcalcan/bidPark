@@ -1,124 +1,168 @@
-import EventEmitter from "./EventEmitter";
-import Bid from "./Bid";
+import EventEmitter from "./EventEmitter.js";
 
-export default class Auction extends EventEmitter {
-  constructor(auctionId, startPrice, startTime, endTime) {
-    super();
+export default class Auction {
+  constructor(
+    auctionId,
+    startPrice,
+    startTime,
+    endTime,
+    eventEmitter,
+    creator
+  ) {
     this._auctionId = auctionId;
-
     this._startPrice = startPrice;
-    this._bids = {};
-    this._highestBid = startPrice;
-    this._highestBidder = null;
     this._startTime = startTime;
     this._endTime = endTime;
-    this._bidManager = new Bid(auctionId);
-    this._bidManager.on("newHighestBid", this._onNewHighestBid.bind(this));
+    this._eventEmitter = eventEmitter;
+    this._creator = creator; // Store the seller/creator ID
+    this._bids = [];
+    this._highestBid = null;
+    this._highestBidder = null;
+
+    // Listen for bid placement events
+    this._eventEmitter.on("bidPlaced", this.handleBidPlaced.bind(this));
   }
-  get user() {
-    return this._user;
-  }
+
   get auctionId() {
     return this._auctionId;
   }
+
   get highestBid() {
     return this._highestBid;
-  }
-  get startBidPrice() {
-    return this._startPrice;
   }
 
   get highestBidder() {
     return this._highestBidder;
   }
+
   get timeRemaining() {
     const now = Date.now();
     return Math.max(0, this._endTime - now);
-  }
-
-  set highestBid(value) {
-    if (value <= this._highestBid) {
-      throw new Error("New bid must be higher than current highest bid");
-    }
-    this._highestBid = value;
-  }
-  set highestBidder(bidder) {
-    if (!bidder) {
-      throw new Error("Bidder cannot be null or undefined");
-    }
-    this._highestBidder = bidder;
   }
 
   isActive() {
     const now = Date.now();
     return now >= this._startTime && now < this._endTime;
   }
-  _hasEnded() {
-    return new Date().getTime() >= this._endTime;
+
+  // Method to get the highest bid of a specific user for this auction
+  getUserHighestBid(userId) {
+    const userBids = this._bids.filter((bid) => bid.userId === userId);
+    return userBids.length > 0
+      ? userBids.reduce(
+          (max, bid) => (bid.amount > max.amount ? bid : max),
+          userBids[0]
+        )
+      : null;
   }
 
-  _handleBidButton() {
-    const bidButton = document.getElementById("bidButton"); // Assume you have a bid button with this ID
-    if (this.isActive()) {
-      bidButton.disabled = false;
-    } else {
-      bidButton.disabled = true;
-    }
-  }
-
-  displayAuctionTimer() {
-    const timerElement = document.getElementById("auctionTimer"); // Assume you have an element with this ID
-    const updateTimer = () => {
-      const remaining = this.timeRemaining;
-      const hours = Math.floor(remaining / 3600000);
-      const minutes = Math.floor((remaining % 3600000) / 60000);
-      const seconds = Math.floor((remaining % 60000) / 1000);
-      timerElement.textContent = `${hours}:${minutes}:${seconds}`;
-      if (remaining > 0) {
-        requestAnimationFrame(updateTimer);
-      } else {
-        timerElement.textContent = "Auction Ended";
+  handleBidPlaced({ userId, auctionId, amount, errorMessageElement }) {
+    if (this.isActive() && auctionId === this._auctionId) {
+      errorMessageElement.textContent = "";
+      // Validate if the new bid is higher than the user's previous highest bid
+      const userHighestBid = this.getUserHighestBid(userId);
+      if (userHighestBid && amount <= userHighestBid.amount) {
+        errorMessageElement.textContent = `New bid must be higher than your previous highest bid of $${userHighestBid.amount}.`;
+        return; // Reject the bid
       }
-    };
-    updateTimer();
-  }
 
-  placeBid(userId, amount) {
-    if (this.isActive()) {
-      this._bidManager.addBid(userId, amount);
+      // Check if the new bid is greater than or equal to the starting price
+      if (amount < this._startPrice) {
+        errorMessageElement.textContent = `New bid must be at least $${this._startPrice}.`;
+        return; // Reject the bid
+      }
+
+      const newBid = {
+        userId,
+        amount,
+        timestamp: Date.now(),
+        auctionId: this._auctionId
+      };
+      this._bids.push(newBid);
+
+      // Check if the new bid is the highest bid
+      if (!this._highestBid || amount > this._highestBid.amount) {
+        this._highestBid = newBid;
+        this._highestBidder = userId;
+
+        // Emit an event for the new highest bid
+        this._eventEmitter.emit("newHighestBid", {
+          auctionId: this._auctionId,
+          userId: userId,
+          amount: amount
+        });
+      }
+
+      console.log(`New bid placed by ${userId}: $${amount}`);
     } else {
-      throw new Error("Auction is not active");
+      errorMessageElement.textContent =
+        "Auction is not active or ID does not match.";
     }
   }
 
-  _onNewHighestBid(newBid) {
-    this._highestBid = newBid.amount;
-    this._highestBidder = newBid.userId;
-    // Update DOM or notify UI
-  }
-
-  displayBidCount() {
-    return this._bidManager.getBidCount();
-  }
   startAuction() {
-    if (new Date().getTime() >= this._startTime) {
+    if (Date.now() >= this._startTime) {
       this._eventEmitter.emit("auctionStarted", this._auctionId);
-      // Additional logic for starting the auction
+      console.log(`Auction ${this._auctionId} has started.`);
     } else {
       throw new Error("It's not time to start the auction yet");
     }
   }
 
+  // endAuction() {
+  //   if (this.hasEnded()) {
+  //     const winner = this.getWinner();
+  //     this._eventEmitter.emit("auctionEnded", {
+  //       auctionId: this._auctionId,
+  //       winner
+  //     });
+  //     console.log(
+  //       `Auction ${this._auctionId} has ended. Winner: ${
+  //         winner ? winner.id : "None"
+  //       }`
+  //     );
+  //   } else {
+  //     throw new Error("The auction hasn't ended yet");
+  //   }
+  // }
   endAuction() {
-    if (this._hasEnded()) {
-      const winner = this._bidManager.determineWinner();
-      this._eventEmitter.emit("auctionEnded", {
-        auctionId: this._auctionId,
-        winner
-      });
-      // Additional logic for ending the auction
+    console.log("End auction method called"); // Debugging line
+    if (this.hasEnded()) {
+      const winner = this.getWinner();
+      if (winner) {
+        // Notify winner
+        this._eventEmitter.emit("auctionEnded", {
+          auctionId: this._auctionId,
+          winnerId: winner.id,
+          winningAmount: winner.amount,
+          sellerId: this.creator // Assuming you have a way to store seller ID
+        });
+      }
+      console.log(
+        `Auction ${this._auctionId} has ended. Winner: ${
+          winner ? winner.id : "None"
+        }`
+      );
     } else {
       throw new Error("The auction hasn't ended yet");
     }
+  }
+
+  hasEnded() {
+    return Date.now() >= this._endTime;
+  }
+
+  getWinner() {
+    if (!this._highestBid) return null; // No bids placed
+
+    return {
+      id: this.highestBidder,
+      amount: this.highestBid.amount,
+      timestamp: this.highestBid.timestamp
+    };
+  }
+
+  displayBidCount() {
+    return this._bids.length; // Return the total number of bids placed
   }
 }

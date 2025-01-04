@@ -1,11 +1,11 @@
 .auction-item__image {
-  background-image: url(../images/1-photo-by-moritz-feldmann-from-pexels.jpg);
+  background-image: url(../images/5-photo-by-van-anh-nguyen-from-pexels.jpg);
   background-size: cover;
   background-repeat: no-repeat;
   background-position: center;
-  margin-right: 20px;
-  border-radius: 8px;
-  width: 190px;
-  height: 190px;
+  /* margin-right: 20px; */
+  /* border-radius: 8px; */
+  width: 250px;
+  height: 250px;
   object-fit: cover;
 }
