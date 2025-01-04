@@ -1,3 +1,5 @@
+require("dotenv").config();
+
 const express = require("express");
 const app = require("./app.js"); // Import the app from app.js
 
