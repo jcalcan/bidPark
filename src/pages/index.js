@@ -2,6 +2,7 @@ import AuctionManager from "../components/AuctionManager.js";
 import User from "../components/User.js";
 import EventEmitter from "../components/EventEmitter.js";
 import "./index.css";
+import "./register";
 
 import painting from "../images/1-photo-by-moritz-feldmann-from-pexels.jpg";
 

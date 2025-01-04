@@ -11,7 +11,7 @@
     <meta name="keywords" content="HTML, CSS, parking project" />
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
 
-    <title>Spots</title>
+    <title>Bid Park VIP - parking spot auction exchange</title>
   </head>
   <body>
     <div class="page">
@@ -33,6 +33,33 @@
       </header>
 
       <main class="main">
+        <!-- Registration Section -->
+        <section class="registration">
+          <h2>User Registration</h2>
+          <form id="registrationForm">
+            <input type="email" id="email" placeholder="Email" required />
+            <input
+              type="password"
+              id="password"
+              placeholder="Password"
+              required
+            />
+            <input
+              type="text"
+              id="first_name"
+              placeholder="First Name"
+              required
+            />
+            <input
+              type="text"
+              id="last_name"
+              placeholder="Last Name"
+              required
+            />
+            <button type="submit">Register</button>
+            <span class="error-message" style="color: red"></span>
+          </form>
+        </section>
         <section class="auction-list">
           <h2 class="auction-list__title">Active Auctions</h2>
           <div class="auction-list__container">
