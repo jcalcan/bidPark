@@ -8,9 +8,9 @@
       name="description"
       content="Bid Park - Parking Spot Auction Exchange"
     />
-    <meta name="keywords" content="HTML, CSS, parking project" />
+    <meta name="keywords" content="HTML, CSS, parking auction project" />
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
-
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
     <title>Bid Park VIP - parking spot auction exchange</title>
   </head>
   <body>
@@ -29,6 +29,29 @@
               <a href="#" class="nav-list__link">My Bids</a>
             </li>
           </ul>
+          <!-- Login section -->
+          <section class="login">
+            <h2>User Login</h2>
+            <form id="loginForm">
+              <input
+                type="email"
+                id="login_email"
+                placeholder="Email"
+                required
+              />
+              <input
+                type="password"
+                id="login_password"
+                placeholder="Password"
+                required
+              />
+              <button type="submit">Login</button>
+              <span class="error-message" style="color: red"></span>
+            </form>
+          </section>
+          <!-- Welcome message will be appended here -->
+          <div id="welcomeContainer"></div>
+          <button id="logoutButton" style="display: none">Logout</button>
         </nav>
       </header>
 
@@ -60,41 +83,42 @@
             <span class="error-message" style="color: red"></span>
           </form>
         </section>
+        <!-- Map container -->
+        <div id="map" style="height: 400px"></div>
+
+        <!-- Auction Creation Section -->
+        <section class="auction-creation">
+          <h2>Create Auction</h2>
+          <form id="auctionForm">
+            <label for="auctionTitle">Title:</label>
+            <input type="text" id="auctionTitle" name="title" required />
+
+            <label for="startingPrice">Starting Price:</label>
+            <input
+              type="number"
+              id="startingPrice"
+              name="startingPrice"
+              required
+            />
+
+            <label for="auctionDescription">Selected Location:</label>
+            <input
+              type="text"
+              id="auctionDescription"
+              name="description"
+              readonly
+            />
+            <div id="coordinatesDisplay">Selected Coordinates: None</div>
+            <!-- Display selected coordinates -->
+            <button type="submit">Create Auction</button>
+          </form>
+        </section>
+
+        <!-- Active Auctions Section -->
         <section class="auction-list">
           <h2 class="auction-list__title">Active Auctions</h2>
-          <div class="auction-list__container">
-            <!-- Dynamic auction items will be injected here -->
-            <article class="auction-item" data-auction-id="auction001">
-              <h3 class="auction-item__title">Alcantara Painting</h3>
-              <img src="" id="painting" alt="" class="auction-item__image" />
-              <p class="auction-item__description">
-                A rare vintage Alcantara painting
-              </p>
-              <div class="auction-item__details">
-                <span class="auction-item__current-bid">Current Bid: $500</span>
-                <span class="auction-item__time-remaining"
-                  >Time Left: 2h 30m</span
-                >
-              </div>
-
-              <!-- Bid form specific to this auction -->
-              <form class="bid-form__form">
-                <input
-                  type="number"
-                  class="bid-form__input"
-                  placeholder="Enter your bid amount"
-                  required
-                />
-                <button type="submit" class="bid-form__submit">
-                  Place Bid
-                </button>
-                <!-- Error message span for displaying validation messages -->
-                <span class="error-message" style="color: red"></span>
-              </form>
-            </article>
-
-            <!-- Additional auction items can be dynamically added here -->
-          </div>
+          <!-- Dynamic auction items will be injected here -->
+          <div id="auctionContainer" class="auction-list__container"></div>
         </section>
       </main>
 
@@ -105,5 +129,7 @@
         </p>
       </footer>
     </div>
+
+    <!-- The script tags will be automatically injected by HtmlWebpackPlugin -->
   </body>
 </html>

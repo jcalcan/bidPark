@@ -6,6 +6,9 @@ export default class Auction {
     startPrice,
     startTime,
     endTime,
+    title,
+    description,
+    { lat, lng },
     eventEmitter,
     creator
   ) {
@@ -13,14 +16,37 @@ export default class Auction {
     this._startPrice = startPrice;
     this._startTime = startTime;
     this._endTime = endTime;
+    this._title = title;
+    this._description = description;
     this._eventEmitter = eventEmitter;
     this._creator = creator; // Store the seller/creator ID
     this._bids = [];
     this._highestBid = null;
     this._highestBidder = null;
+    this._hasEnded = false; // Flag to track if auction has ended
 
     // Listen for bid placement events
     this._eventEmitter.on("bidPlaced", this.handleBidPlaced.bind(this));
+    this._eventEmitter.off("auctionEnded", this.endAuction.bind(this));
+    this._eventEmitter.on("auctionEnded", this.endAuction.bind(this));
+  }
+
+  get title() {
+    return this._title;
+  }
+  get description() {
+    return this._description;
+  }
+  get startTime() {
+    return this._startTime;
+  }
+
+  get endTime() {
+    return this._endTime;
+  }
+
+  get startPrice() {
+    return this._startPrice;
   }
 
   get auctionId() {
@@ -128,14 +154,16 @@ export default class Auction {
   endAuction() {
     console.log("End auction method called"); // Debugging line
     if (this.hasEnded()) {
+      if (this._hasEnded) return; // Prevent multiple calls
+      this._hasEnded = true; // Set flag to true
+
       const winner = this.getWinner();
       if (winner) {
         // Notify winner
         this._eventEmitter.emit("auctionEnded", {
           auctionId: this._auctionId,
           winnerId: winner.id,
-          winningAmount: winner.amount,
-          sellerId: this.creator // Assuming you have a way to store seller ID
+          winningAmount: winner.amount
         });
       }
       console.log(

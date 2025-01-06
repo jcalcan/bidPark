@@ -20,12 +20,23 @@ export default class AuctionManager {
     }
   }
 
-  createAuction(auctionId, startPrice, startTime, endTime) {
+  createAuction(
+    auctionId,
+    startPrice,
+    startTime,
+    endTime,
+    title,
+    description,
+    { lat, lng }
+  ) {
     const auction = new Auction(
       auctionId,
       startPrice,
       startTime,
       endTime,
+      title,
+      description,
+      { lat, lng },
       this._eventEmitter
     );
     this._auctions[auctionId] = auction;

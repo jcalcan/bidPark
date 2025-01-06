@@ -77,6 +77,7 @@ app.post("/api/auth/login", async (req, res) => {
     }
 
     const user = result.rows[0];
+    console.log(`user: ${user}`);
 
     // Compare provided password with stored hashed password
     const isMatch = await bcrypt.compare(password, user.password_hash);
@@ -90,12 +91,36 @@ app.post("/api/auth/login", async (req, res) => {
       expiresIn: "1h"
     });
 
-    res.json({ message: "Login successful.", token });
+    res.json({
+      message: "Login successful.",
+      token,
+      user_id: user.user_id,
+      first_name: user.first_name
+    });
+    // eventEmitter.emit("userLoggedIn", { userName: user.first_name });
   } catch (error) {
     console.error("Error during login:", error);
     res.status(500).json({ message: "Error logging in." });
   }
 });
+
+//Token Authentication Endpoint
+app.get("/api/auth/verify", authenticateToken, (req, res) => {
+  res.json({ message: "Token is valid" });
+});
+
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers["authorization"];
+  const token = authHeader && authHeader.split(" ")[1];
+
+  if (token == null) return res.sendStatus(401);
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) return res.sendStatus(403);
+    req.user = user;
+    next();
+  });
+}
 
 // Export the app for use in server.js
 module.exports = app;

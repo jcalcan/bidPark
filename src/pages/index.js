@@ -3,147 +3,310 @@ import User from "../components/User.js";
 import EventEmitter from "../components/EventEmitter.js";
 import "./index.css";
 import "./register";
+import "./login.js";
+import { verifyTokenAndUpdateUI } from "../../server/authUtils";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+import "leaflet-easybutton";
+import { v4 as uuidv4 } from "uuid"; // Importing UUID from npm
+import { eventEmitter } from "./login.js";
 
-import painting from "../images/1-photo-by-moritz-feldmann-from-pexels.jpg";
+let currentUser = null;
+// const eventEmitter = new EventEmitter();
+const auctionManager = new AuctionManager(eventEmitter);
+import painting from "../images/3-photo-by-tubanur-dogan-from-pexels.jpg";
 
 document.addEventListener("DOMContentLoaded", () => {
-  const eventEmitter = new EventEmitter();
-  const auctionManager = new AuctionManager(eventEmitter);
+  // Listen for user login events
 
-  let currentUser = null;
+  // Check if user is authenticated and handle login events
+  function initializeUserSession() {
+    const token = localStorage.getItem("jwtToken");
+    const userId = localStorage.getItem("userId");
 
-  // Simulating user login
-  function loginUser(userId, userName) {
-    currentUser = new User(userId, userName, eventEmitter);
-    document.querySelector(
-      ".header__title"
-    ).textContent = `Welcome, ${userName}!`;
+    if (token) {
+      verifyTokenAndUpdateUI(token)
+        .then((user) => {
+          setupAuthenticatedUser(user.id, user.name);
+        })
+        .catch((err) => {
+          console.error("Authentication failed:", err);
+          toggleAuctionCreation(false);
+        });
+    } else {
+      toggleAuctionCreation(false);
+    }
+
+    // Listen for user login events
+    eventEmitter.on("userLoggedIn", ({ userName }) => {
+      console.log(`User logged in: ${userName}`);
+      setupAuthenticatedUser(userId, userName);
+    });
   }
 
-  // Initialize with a mock user
-  loginUser("user123", "John Doe");
+  function setupAuthenticatedUser(userId, userName) {
+    currentUser = new User(userId, userName, eventEmitter);
+    toggleAuctionCreation(true);
+    attachMapClickListener(currentUser);
+  }
 
-  // Create a sample auction
-  const auctionId = "auction001";
-  const startPrice = 100;
-  const startTime = Date.now();
-  const endTime = startTime + 20000; // Auction lasts for 20 seconds
+  // Call this function to initialize the user session
+  initializeUserSession();
 
-  const auction = auctionManager.createAuction(
-    auctionId,
-    startPrice,
-    startTime,
-    endTime
-  );
+  // Map initialization
+  const map = L.map("map").setView([51.505, -0.09], 13); // Default view
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "© OpenStreetMap contributors"
+  }).addTo(map);
 
-  // Start the auction immediately after creation
-  auction.startAuction();
+  L.easyButton("fa-location-arrow", function (btn, map) {
+    map.locate({ setView: true, maxZoom: 18 });
+  }).addTo(map);
 
-  // Update auction display and bind auction ID to bid forms
-  function updateAuctionDisplay() {
-    const auctionContainer = document.querySelector(".auction-list__container");
-    auctionContainer.innerHTML = ""; // Clear existing auctions
+  let selectedCoordinates = null; // To store selected coordinates
 
+  // Function to get user location and set map view
+  function locateUser() {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const userLat = position.coords.latitude;
+          const userLng = position.coords.longitude;
+          const userLocation = L.latLng(userLat, userLng);
+          map.setView(userLocation, 15); // Zoom level can be adjusted
+
+          // Create a circle around the user's location with a radius of 0.25 miles
+          L.circle(userLocation, {
+            color: "blue",
+            fillColor: "#30f",
+            fillOpacity: 0.5,
+            radius: 402
+          }).addTo(map);
+
+          // Optionally add a marker for the user's location
+          L.marker(userLocation)
+            .addTo(map)
+            .bindPopup("You are here")
+            .openPopup();
+        },
+        () => {
+          alert("Unable to retrieve your location.");
+        }
+      );
+    } else {
+      alert("Geolocation is not supported by this browser.");
+    }
+  }
+
+  // Call locateUser on load to show the map and user location
+  locateUser();
+
+  function toggleAuctionCreation(isLoggedIn) {
+    const auctionContainer = document.getElementById("auctionContainer");
+    const auctionFormSection = document.querySelector(".auction-creation");
+    const registrationSection = document.querySelector(".registration");
+
+    if (isLoggedIn) {
+      auctionContainer.style.display = "block"; // Show auction container
+      auctionFormSection.style.display = "block"; // Show auction form section
+      registrationSection.style.display = "none"; //Hide registration form section
+    } else {
+      auctionContainer.style.display = "none"; // Hide auction container
+      auctionFormSection.style.display = "none"; // Hide auction form section
+      alert("Please log in to create an auction."); // Inform the user
+    }
+  }
+
+  function attachMapClickListener(currentUser) {
+    console.log(`in attachMapClickListener function`);
+    map.on("click", function (e) {
+      console.log("Map clicked at:", e.latlng); // Log the clicked coordinates
+      if (currentUser) {
+        selectedCoordinates = e.latlng; // Store clicked coordinates
+        console.log("Current User:", currentUser); // Log current user info
+        console.log("Selected Coordinates:", selectedCoordinates); // Log selected coordinates
+
+        const coordinatesString = `${selectedCoordinates.lat.toFixed(
+          6
+        )},${selectedCoordinates.lng.toFixed(6)}`;
+
+        // Update display element with the coordinates
+        document.getElementById(
+          "coordinatesDisplay"
+        ).textContent = `Selected Coordinates: ${coordinatesString}`;
+
+        // Update the auctionDescription input
+        document.getElementById("auctionDescription").value = coordinatesString;
+
+        // Optionally scroll to the auction form section to make it visible
+        document
+          .querySelector(".auction-creation")
+          .scrollIntoView({ behavior: "smooth" });
+      } else {
+        console.log("User is not logged in."); // Log if user is not logged in
+        alert("Please log in to create an auction.");
+      }
+    });
+  }
+
+  // Auction creation form handling
+  const auctionForm = document.getElementById("auctionForm");
+
+  if (auctionForm) {
+    console.log(`in auctionForm function`);
+    auctionForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const title =
+        auctionForm.querySelector("#auctionTitle").value || "Parking Available";
+
+      const startingPrice = auctionForm.querySelector("#startingPrice").value;
+
+      const selectedCoordinates = auctionForm.querySelector(
+        "#auctionDescription"
+      ).value;
+
+      if (!selectedCoordinates) {
+        alert("Please select a location on the map.");
+        return;
+      }
+
+      // Parse the coordinates string into lat and lng
+      const [lat, lng] = selectedCoordinates
+        .split(",")
+        .map((coord) => parseFloat(coord.trim()));
+
+      const description = `Parking spot at coordinates: ${lat.toFixed(
+        6
+      )}, ${lng.toFixed(6)}`;
+      const auctionId = `${uuidv4()}-${Date.now()}`;
+      const startTime = Date.now();
+      const endTime = startTime + 20000;
+      console.log(`start time: ${startTime}`);
+      console.log(`end time: ${endTime}`);
+
+      const auction = auctionManager.createAuction(
+        auctionId,
+        startingPrice,
+        startTime,
+        endTime,
+        title,
+        description,
+        { lat, lng }
+      );
+      auction.startAuction();
+      updateAuctionDisplay(auction);
+      auctionForm.reset();
+      document.getElementById("coordinatesDisplay").textContent = "";
+    });
+  }
+
+  function updateAuctionDisplay(auction) {
+    console.log(`auction object: ${JSON.stringify(auction, null, 2)}`);
+    const auctionContainer = document.getElementById("auctionContainer");
     const auctionElement = document.createElement("article");
-    auctionElement.className = "auction-item";
-    auctionElement.dataset.auctionId = auctionId; // Set data attribute for the auction ID
-    auctionElement.innerHTML = `
-      <h3 class="auction-item__title">Alcantara Painting</h3>
-      <img src="${painting}" id="painting" alt="" class="auction-item__image" />
-      <p class="auction-item__description">A rare vintage Alcantara painting</p>
-      <div class="auction-item__details">
-        <span class="auction-item__current-bid">Current Bid: $${startPrice}</span>
-        <span class="auction-item__time-remaining" id="time-remaining">Time Left: ${formatTimeRemaining(
-          20000
-        )}</span>
-      </div>
 
-      <!-- Bid form specific to this auction -->
-      <form class="bid-form__form">
-        <input type="number" class="bid-form__input" placeholder="Enter your bid amount" required />
-        <button type="submit" class="bid-form__submit">Place Bid</button>
-        <!-- Error message span for displaying validation messages -->
-        <span class="error-message" style="color: red;"></span> 
-      </form>
-    `;
+    auctionElement.className = "auction-item";
+    auctionElement.dataset.auctionId = auction.auctionId;
+
+    auctionElement.innerHTML = `
+          <h3 class="auction-item__title">${auction.title}</h3>
+          <img src="${painting}" alt="${
+      auction.description
+    }" class="auction-item__image" />
+          <p class="auction-item__description">${auction.description}</p>
+          <div class="auction-item__details">
+              <span class="auction-item__current-bid">Current Bid: $${
+                auction.startPrice
+              }</span>
+              <span class="auction-item__time-remaining" id="time-remaining-${
+                auction.endTime
+              }">Time Left: ${formatTimeRemaining(20000)}</span>
+          </div>
+          <!-- Bid form specific to this auction -->
+          <form class="bid-form__form">
+              <input type="number" class="bid-form__input" placeholder="Enter your bid amount" required />
+              <button type="submit" class="bid-form__submit">Place Bid</button>
+              <!-- Error message span for displaying validation messages -->
+              <span class="error-message" style="color: red;"></span>
+          </form>`;
 
     auctionContainer.appendChild(auctionElement);
 
-    // Add event listener for bid form submission
     const bidForm = auctionElement.querySelector(".bid-form__form");
+
     bidForm.addEventListener("submit", (e) => {
       e.preventDefault();
-
       const bidAmount = Number(bidForm.querySelector(".bid-form__input").value);
-      const errorMessageElement = bidForm.querySelector(".error-message"); // Select the error message span
-      const currentAuctionId =
-        bidForm.closest(".auction-item").dataset.auctionId; // Get auction ID from data attribute
+      const errorMessageElement = bidForm.querySelector(".error-message");
 
-      // Clear previous error messages
-      errorMessageElement.textContent = "";
-
-      // Emit the bidPlaced event with necessary parameters
       eventEmitter.emit("bidPlaced", {
-        userId: currentUser.id,
-        auctionId: currentAuctionId,
+        userId: localStorage.getItem("userId"),
+        auctionId: auction.auctionId,
         amount: bidAmount,
         errorMessageElement
       });
 
-      // Optionally reset the form after submission
       bidForm.reset();
     });
 
-    // Start updating time remaining
-    startCountdown(endTime);
+    startCountdown(auction.endTime).then(() => {
+      const winner = auction.getWinner();
+      const highestBid = auction.highestBid;
 
-    // Listen for auction end notifications
-    const handleAuctionEnded = ({ winnerId, winningAmount }) => {
+      if (winner) {
+        // Emit auctionEnded event with actual winner details
+        eventEmitter.emit("auctionEnded", {
+          winnerId: winner.id,
+          winningAmount: highestBid
+        });
+      } else {
+        eventEmitter.emit("auctionEnded", {
+          winnerId: null,
+          winningAmount: 0
+        }); // No bids were placed
+      }
+    });
+
+    eventEmitter.on("auctionEnded", ({ winnerId, winningAmount }) => {
       alert(
-        `Auction ended! Winner: ${winnerId}, Winning Amount: $${winningAmount}`
+        `ALERT from emitter ON:in countdown function :::Auction ended! Winner: ${winnerId}, Winning Amount: $${winningAmount}`
       );
-
-      // Notify the seller as well (you may need to adjust how you access seller info)
       alert(
-        `Seller has been notified about the winning bid of $${winningAmount}.`
+        `ALERT from emitter ON:in countdown function :::Seller has been notified about the winning bid of $${winningAmount}.`
       );
-
-      // Remove this listener after the auction ends
-      eventEmitter.off("auctionEnded", handleAuctionEnded);
-    };
-
-    eventEmitter.on("auctionEnded", handleAuctionEnded);
+    });
   }
 
-  // Function to format time remaining
   function formatTimeRemaining(ms) {
     const seconds = Math.floor(ms / 1000);
     const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-    return `${hours}h ${minutes % 60}m ${seconds % 60}s`;
+
+    return `${Math.floor(minutes / 60)}h ${minutes % 60}m ${seconds % 60}s`;
   }
 
-  // Function to start countdown and update time remaining in DOM
   function startCountdown(endTime) {
-    const timeRemainingElement = document.getElementById("time-remaining");
+    const timeRemainingElement = document.getElementById(
+      `time-remaining-${endTime}`
+    );
 
-    const intervalId = setInterval(() => {
-      const now = Date.now();
-      const remainingTime = endTime - now;
+    return new Promise((resolve) => {
+      const intervalId = setInterval(() => {
+        const now = Date.now();
+        const remainingTime = endTime - now;
 
-      if (remainingTime <= 0) {
-        clearInterval(intervalId); // Stop the countdown when time is up
-        timeRemainingElement.textContent = "Time Left: Auction has ended!";
-        auction.endAuction();
-        return; // Optionally handle end of auction logic here
-      }
+        if (remainingTime <= 0) {
+          clearInterval(intervalId);
+          timeRemainingElement.textContent = "Time Left: Auction has ended!";
 
-      timeRemainingElement.textContent = `Time Left: ${formatTimeRemaining(
-        remainingTime
-      )}`;
-    }, 1000); // Update every second
+          // Resolve the promise when the countdown ends
+          resolve();
+          return;
+        }
+
+        timeRemainingElement.textContent = `Time Left: ${formatTimeRemaining(
+          remainingTime
+        )}`;
+      }, 1000); //update UI every second
+    });
   }
-
-  // Initial display update
-  updateAuctionDisplay();
 });

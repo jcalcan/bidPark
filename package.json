@@ -17,12 +17,13 @@
     "autoprefixer": "10.4.7",
     "babel-loader": "8.2.5",
     "clean-webpack-plugin": "4.0.0",
-    "css-loader": "6.7.1",
+    "css-loader": "^6.7.1",
     "cssnano": "5.1.12",
     "html-webpack-plugin": "5.5.0",
     "mini-css-extract-plugin": "2.6.1",
     "nodemon": "^3.1.9",
     "postcss-loader": "7.0.1",
+    "style-loader": "^4.0.0",
     "webpack": "^5.97.1",
     "webpack-cli": "4.10.0",
     "webpack-dev-server": "4.9.3"
@@ -33,7 +34,11 @@
     "core-js": "3.23.5",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
+    "font-awesome": "^4.7.0",
     "jsonwebtoken": "^9.0.2",
-    "pg": "^8.13.1"
+    "leaflet": "^1.9.4",
+    "leaflet-easybutton": "^2.4.0",
+    "pg": "^8.13.1",
+    "uuid": "^11.0.3"
   }
 }
