@@ -18,7 +18,7 @@ app.use(cors());
 // Serve static files from the 'dist' directory
 app.use(express.static(path.join(__dirname, "../dist")));
 
-// Example route to fetch all users
+// route to fetch all users
 app.get("/api/users", async (req, res) => {
   try {
     const result = await client.query("SELECT * FROM users");
