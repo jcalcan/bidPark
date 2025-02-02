@@ -46,9 +46,50 @@
                 required
               />
               <button type="submit">Login</button>
+              <a href="#" id="forgotPasswordLink">Forgot Password?</a>
               <span class="error-message" style="color: red"></span>
             </form>
           </section>
+          <!-- Forgot Password Section -->
+          <section class="forgot-password" style="display: none">
+            <h2>Reset Password</h2>
+            <form id="forgotPasswordForm">
+              <input
+                type="tel"
+                id="reset_phone"
+                placeholder="Enter your phone number"
+                required
+              />
+              <button type="submit" id="sendResetCodeBtn">
+                Send Reset Code
+              </button>
+              <span class="reset-message"></span>
+            </form>
+            <form id="resetPasswordForm" style="display: none">
+              <input
+                type="text"
+                id="resetCode"
+                name="resetCode"
+                placeholder="Enter reset code"
+                required
+              />
+              <input
+                type="password"
+                id="newPassword"
+                name="newPassword"
+                placeholder="Enter new password"
+                required
+              />
+              <button type="submit" id="resetPasswordBtn">
+                Reset Password
+              </button>
+            </form>
+
+            <span class="reset-message" style="color: green"></span>
+
+            <a href="#" id="backToLoginLink">Back to Login</a>
+          </section>
+
           <!-- Welcome message will be appended here -->
           <div id="welcomeContainer"></div>
           <button id="logoutButton" style="display: none">Logout</button>
@@ -60,13 +101,6 @@
         <section class="registration">
           <h2>User Registration</h2>
           <form id="registrationForm">
-            <input type="email" id="email" placeholder="Email" required />
-            <input
-              type="password"
-              id="password"
-              placeholder="Password"
-              required
-            />
             <input
               type="text"
               id="first_name"
@@ -79,6 +113,16 @@
               placeholder="Last Name"
               required
             />
+            <input type="tel" id="phone" placeholder="Phone Number" required />
+            <input type="email" id="email" placeholder="Email" required />
+
+            <input
+              type="password"
+              id="password"
+              placeholder="Password"
+              required
+            />
+
             <button type="submit">Register</button>
             <span class="error-message" style="color: red"></span>
           </form>
@@ -87,7 +131,7 @@
         <div id="map" style="height: 400px"></div>
 
         <!-- Auction Creation Section -->
-        <section class="auction-creation">
+        <section class="auction-creation" id="auction-creation">
           <h2>Create Auction</h2>
           <form id="auctionForm">
             <label for="auctionTitle">Title:</label>
@@ -129,7 +173,5 @@
         </p>
       </footer>
     </div>
-
-    <!-- The script tags will be automatically injected by HtmlWebpackPlugin -->
   </body>
 </html>

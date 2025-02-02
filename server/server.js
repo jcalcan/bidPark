@@ -3,7 +3,7 @@ require("dotenv").config();
 const express = require("express");
 const app = require("./app.js"); // Import the app from app.js
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 
 // Start the server
 app.listen(PORT, () => {

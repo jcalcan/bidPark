@@ -18,6 +18,112 @@ import painting from "../images/3-photo-by-tubanur-dogan-from-pexels.jpg";
 
 document.addEventListener("DOMContentLoaded", () => {
   // Listen for user login events
+  const forgotPasswordLink = document.getElementById("forgotPasswordLink");
+  const forgotPasswordForm = document.getElementById("forgotPasswordForm");
+  const loginSection = document.querySelector(".login");
+  const forgotPasswordSection = document.querySelector(".forgot-password");
+  const resetCodeSection = document.getElementById("resetCodeSection");
+  const sendResetCodeBtn = document.getElementById("sendResetCodeBtn");
+  const resetPasswordForm = document.getElementById("resetPasswordForm");
+  const backToLoginLink = document.getElementById("backToLoginLink");
+
+  forgotPasswordLink.addEventListener("click", (e) => {
+    e.preventDefault();
+    loginSection.style.display = "none";
+    forgotPasswordSection.style.display = "block";
+  });
+
+  forgotPasswordForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const phoneNumber = document.getElementById("reset_phone").value;
+    // Validate phone number format
+    const phoneRegex = /^\d{10}$/;
+    if (!phoneRegex.test(phoneNumber)) {
+      document.querySelector(".reset-message").textContent =
+        "Invalid phone number format. Use XXX-XXX-XXXX without dashes";
+      return;
+    }
+    try {
+      const response = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phoneNumber })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        document.querySelector(".reset-message").textContent = data.message;
+        console.log(data.message);
+        resetCodeSection.style.display = "block";
+        sendResetCodeBtn.style.display = "none";
+        startResetCodeCountdown();
+      } else {
+        throw new Error(data.message);
+      }
+    } catch (error) {
+      document.querySelector(".reset-message").textContent = error.message;
+      document.querySelector(".reset-message").style.color = "red";
+    }
+    forgotPasswordForm.reset();
+  });
+
+  function startResetCodeCountdown() {
+    let timeLeft = 180; // 3 minutes in seconds
+    const countdownElement = document.createElement("p");
+    document.querySelector(".forgot-password").appendChild(countdownElement);
+
+    const countdownInterval = setInterval(() => {
+      const minutes = Math.floor(timeLeft / 60);
+      const seconds = timeLeft % 60;
+      countdownElement.textContent = `Code expires in: ${minutes}:${
+        seconds < 10 ? "0" : ""
+      }${seconds}`;
+
+      if (timeLeft <= 0) {
+        clearInterval(countdownInterval);
+        countdownElement.textContent =
+          "Reset code has expired. Please request a new one.";
+      }
+      timeLeft--;
+    }, 1000);
+  }
+
+  resetPasswordForm.addEventListener("click", async (e) => {
+    e.preventDefault();
+    const phoneNumber = document.getElementById("reset_phone").value;
+    const resetCode = document.getElementById("resetCode").value;
+    const newPassword = document.getElementById("newPassword").value;
+    try {
+      const response = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ phoneNumber, resetCode, newPassword })
+      });
+      const data = await response.json();
+      if (response.ok) {
+        document.querySelector(".reset-message").textContent = data.message;
+        setTimeout(() => backToLogin(), 3000);
+      } else {
+        throw new Error(data.message);
+      }
+    } catch (error) {
+      document.querySelector(".reset-message").textContent = error.message;
+    }
+  });
+
+  function backToLogin() {
+    loginSection.style.display = "block";
+    forgotPasswordSection.style.display = "none";
+    resetCodeSection.style.display = "none";
+    resetPasswordForm.style.display = "none";
+    resetPasswordForm.reset();
+    forgotPasswordForm.reset();
+    document.querySelector(".reset-message").textContent = "";
+  }
+
+  backToLoginLink.addEventListener("click", (e) => {
+    e.preventDefault();
+    backToLogin();
+  });
 
   // Check if user is authenticated and handle login events
   function initializeUserSession() {
@@ -28,6 +134,8 @@ document.addEventListener("DOMContentLoaded", () => {
       verifyTokenAndUpdateUI(token)
         .then((user) => {
           setupAuthenticatedUser(user.id, user.name);
+          backToLogin();
+          toggleAuctionCreation(true);
         })
         .catch((err) => {
           console.error("Authentication failed:", err);
@@ -38,9 +146,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // Listen for user login events
-    eventEmitter.on("userLoggedIn", ({ userName }) => {
+    eventEmitter.on("userLoggedIn", ({ userId, userName }) => {
       console.log(`User logged in: ${userName}`);
       setupAuthenticatedUser(userId, userName);
+      backToLogin(); // Hide login form
+      toggleAuctionCreation(true); // Show auction creation form
     });
   }
 
@@ -153,7 +263,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const auctionForm = document.getElementById("auctionForm");
 
   if (auctionForm) {
-    console.log(`in auctionForm function`);
+    console.log(`in auctionForm function in index.js`);
     auctionForm.addEventListener("submit", (e) => {
       e.preventDefault();
       const title =

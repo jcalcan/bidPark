@@ -12,7 +12,7 @@ document
     const password = document.getElementById("login_password").value;
 
     try {
-      const response = await fetch("http://localhost:3000/api/auth/login", {
+      const response = await fetch("http://localhost:8080/api/auth/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -48,7 +48,8 @@ document
         // Hide the login section
         const loginSection = document.querySelector(".login"); // Adjust selector as needed
         if (loginSection) {
-          loginSection.style.display = "none"; // Hide the login section
+          // loginSection.style.display = "none"; // Hide the login section
+          loginSection.remove();
         }
 
         // Show welcome message with user's name
@@ -88,7 +89,8 @@ export function logout() {
 
 function showLoginUI() {
   // Hide auction block
-  const auctionBlock = document.getElementById("auctionBlock");
+  console.log("showLoginUI function called");
+  const auctionBlock = document.getElementById("auctionForm");
   if (auctionBlock) {
     auctionBlock.style.display = "none";
   }

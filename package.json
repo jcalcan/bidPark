@@ -7,7 +7,7 @@
     "start": "node server/server.js",
     "build": "webpack --mode production",
     "dev": "webpack serve --mode development",
-    "dev:server": "nodemon scripts/server.js"
+    "dev:server": "nodemon server/server.js"
   },
   "author": "juan alcantara",
   "license": "ISC",
@@ -39,6 +39,7 @@
     "leaflet": "^1.9.4",
     "leaflet-easybutton": "^2.4.0",
     "pg": "^8.13.1",
+    "twilio": "^5.4.3",
     "uuid": "^11.0.3"
   }
 }
